@@ -1,0 +1,54 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/main.yml"
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Download iOS build
+        run: |
+          curl -L \
+            "https://github.com/omama2010/omama-tower-updates/releases/download/ios-build-source/iOS.zip" \
+            -o iOS.zip
+
+      - name: Extract
+        run: |
+          unzip -q iOS.zip -d ios_source
+
+      - name: Find Xcode project
+        run: |
+          PROJECT=$(find ios_source -name "Unity-iPhone.xcodeproj" -type d | head -1)
+          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme Unity-iPhone \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath "$RUNNER_TEMP/build" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Create IPA
+        run: |
+          APP=$(find "$RUNNER_TEMP/build/Build/Products/Release-iphoneos" -maxdepth 1 -name "*.app" -type d | head -1)
+
+          mkdir Payload
+          cp -R "$APP" Payload/
+
+          zip -qry OmamaTower-unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmamaTower-iOS
+          path: OmamaTower-unsigned.ipa
