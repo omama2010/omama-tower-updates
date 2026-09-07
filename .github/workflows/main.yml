@@ -21,6 +21,13 @@ jobs:
         run: |
           unzip -q iOS.zip -d ios_source
 
+      - name: Fix executable permissions
+        run: |
+          ROOT=$(find ios_source -name "process_symbols.sh" -type f -exec dirname {} \; | head -1)
+          chmod +x "$ROOT/process_symbols.sh"
+          chmod +x "$ROOT/usymtool"
+          chmod +x "$ROOT/usymtoolarm64"
+
       - name: Find Xcode project
         run: |
           PROJECT=$(find ios_source -name "Unity-iPhone.xcodeproj" -type d | head -1)
