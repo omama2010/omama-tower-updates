@@ -45,10 +45,22 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY=""
 
+      - name: Remove embedded static UnityRuntime
+        run: |
+          APP=$(find "$RUNNER_TEMP/build/Build/Products/Release-iphoneos" -maxdepth 1 -name "*.app" -type d | head -1)
+
+          echo "App: $APP"
+
+          if [ -d "$APP/Frameworks/UnityRuntime.framework" ]; then
+            rm -rf "$APP/Frameworks/UnityRuntime.framework"
+            echo "Removed UnityRuntime.framework"
+          fi
+
       - name: Create IPA
         run: |
           APP=$(find "$RUNNER_TEMP/build/Build/Products/Release-iphoneos" -maxdepth 1 -name "*.app" -type d | head -1)
 
+          rm -rf Payload
           mkdir Payload
           cp -R "$APP" Payload/
 
