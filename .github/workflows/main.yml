@@ -13,8 +13,8 @@ jobs:
     steps:
       - name: Download iOS build
         run: |
-          curl -L \
-            "https://github.com/omama2010/omama-tower-updates/releases/download/ios-build-source/iOS.zip" \
+          curl -fL \
+            "https://github.com/omama2010/omama-tower-updates/releases/download/ios-build-source/ios_update_2.74.zip" \
             -o iOS.zip
 
       - name: Extract
