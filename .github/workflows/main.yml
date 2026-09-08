@@ -13,9 +13,22 @@ jobs:
     steps:
       - name: Download iOS build
         run: |
-          curl -fL \
-            "https://github.com/omama2010/omama-tower-updates/releases/download/ios-build-source/ios_update_2.74.zip" \
-            -o iOS.zip
+          ASSET_URL="$(
+            curl -fsSL \
+              "https://api.github.com/repos/omama2010/omama-tower-updates/releases/tags/ios-build-source" \
+            | jq -r '.assets[].browser_download_url' \
+            | grep -E '/ios_update_[0-9]+(\.[0-9]+)*\.zip$' \
+            | sort -V \
+            | tail -n 1
+          )"
+
+          if [ -z "$ASSET_URL" ]; then
+            echo "ios_update_*.zip が見つかりません。"
+            exit 1
+          fi
+
+          echo "Download: $ASSET_URL"
+          curl -fL "$ASSET_URL" -o iOS.zip
 
       - name: Extract
         run: |
