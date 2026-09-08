@@ -19,8 +19,8 @@ jobs:
 
       - name: Extract
         run: |
-          unzip -q iOS.zip -d ios_source
-
+          ditto -x -k iOS.zip ios_source
+          
       - name: Fix executable permissions
         run: |
           ROOT=$(find ios_source -name "process_symbols.sh" -type f -exec dirname {} \; | head -1)
