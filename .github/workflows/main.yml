@@ -6,29 +6,52 @@ on:
     paths:
       - ".github/workflows/main.yml"
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: macos-latest
 
     steps:
       - name: Download iOS build
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ASSET_URL="$(
-            curl -fsSL \
-              "https://api.github.com/repos/omama2010/omama-tower-updates/releases/tags/ios-build-source" \
-            | jq -r '.assets[].browser_download_url' \
-            | grep -E '/ios_update_[0-9]+(\.[0-9]+)*\.zip$' \
-            | sort -V \
-            | tail -n 1
+          ASSET_NAME="$(
+            gh release view ios-build-source \
+              --repo omama2010/omama-tower-updates \
+              --json assets \
+              --jq '.assets[].name' \
+            | grep -E '^ios_update_[0-9]+(\.[0-9]+)*\.zip$' \
+            | python3 -c '
+          import sys
+
+          files = [x.strip() for x in sys.stdin if x.strip()]
+
+          def version(name):
+              return tuple(
+                  map(int, name[len("ios_update_"):-len(".zip")].split("."))
+              )
+
+          files.sort(key=version)
+
+          if files:
+              print(files[-1])
+          '
           )"
 
-          if [ -z "$ASSET_URL" ]; then
+          if [ -z "$ASSET_NAME" ]; then
             echo "ios_update_*.zip が見つかりません。"
             exit 1
           fi
 
-          echo "Download: $ASSET_URL"
-          curl -fL "$ASSET_URL" -o iOS.zip
+          echo "Download: $ASSET_NAME"
+
+          gh release download ios-build-source \
+            --repo omama2010/omama-tower-updates \
+            --pattern "$ASSET_NAME" \
+            --output iOS.zip
 
       - name: Extract
         run: |
